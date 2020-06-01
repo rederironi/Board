@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="exceptionMapper">
+	<!-- 예외 등록 -->
+	<insert id="insert">
+	    INSERT INTO MP_EXCEPTION(   
+	   					         ETYPE 
+	   					       , EDATE
+	   					       , EUSER
+	   					       , CONTENT
+	   					       , WRITER
+	   					       )
+	                  VALUES(    
+	                  			 #{etype} 
+	                 		   , #{edate}
+	                 		   , #{euser}
+	                 		   , #{content}
+	                 		   , #{writer}
+	                 		   )
+    </insert>
+    
+    <select id="read" parameterType="int" resultType="kr.co.vo.ExceptionVO">
+		SELECT	ENO
+			  , ETYPE
+			  , EDATE
+			  , EUSER
+			  , CONTENT
+			  , WRITER
+			  , REGDATE
+		 FROM MP_EXCEPTION
+		 WHERE ENO = #{eno}
+	</select>
+	
+	<select id="listPage" resultType="kr.co.vo.ExceptionVO" parameterType="kr.co.vo.SearchCriteria">
+		SELECT ROWNUM, ENO, ETYPE, EDATE, EUSER, CONTENT, WRITER, REGDATE
+		FROM
+		(
+		  SELECT 
+		      @rownum:=@rownum+1 AS ROWNUM, 
+		      A.ENO, 
+			  A.ETYPE, 
+		      A.EDATE,
+		      A.EUSER,
+		      A.CONTENT,
+			  A.WRITER, 
+			  A.REGDATE
+		  FROM 
+		      MP_EXCEPTION A, 
+		      (SELECT @ROWNUM := 0) R
+		  WHERE 
+		      1=1
+		      <include refid="search"></include>
+		      <include refid="search2"></include>
+		      ORDER BY ENO DESC
+		) list
+		<![CDATA[WHERE ROWNUM >= #{rowStart} AND ROWNUM <= #{rowEnd}]]>
+		ORDER BY list.ENO DESC
+	</select>
+	
+	<select id="listCount" parameterType="kr.co.vo.SearchCriteria" resultType="int">
+		SELECT COUNT(ENO)
+		   FROM MP_EXCEPTION
+		   WHERE 1=1
+		<include refid="search"></include>
+		<include refid="search2"></include>	
+		   <![CDATA[AND ENO > 0]]>
+	</select>
+	
+	<sql id="search">
+		<if test="searchType != null">
+			<!-- <if test="searchType == 't'.toString()">AND TITLE LIKE '%' #{keyword} '%'</if> -->
+			<if test="searchType == 'c'.toString()">AND CONTENT LIKE '%' #{keyword} '%'</if>
+			<if test="searchType == 'w'.toString()">AND WRITER LIKE '%' #{keyword} '%'</if>
+			<!-- <if test="searchType == 'type'.toString()">AND ETYPE LIKE '%' #{keyword} '%'</if> -->
+			<!-- <if test="searchType == 'tc'.toString()">AND (TITLE LIKE '%' #{keyword} '%') or (CONTENT LIKE '%' #{keyword} '%')</if> -->
+		</if>
+	</sql>
+	
+	<sql id="search2">
+		<if test="searchEType != null">
+			<if test="searchEType == 'type'.toString()">AND ETYPE LIKE '%' #{eTypeKeyword} '%'</if>
+		</if>
+	</sql>
+	
+	<update id="update" parameterType="kr.co.vo.ExceptionVO">
+		UPDATE MP_EXCEPTION
+		   SET ETYPE    =   #{etype},
+		   	   EDATE    =   #{edate},
+		   	   EUSER    =   #{euser},
+		   	   CONTENT    =   #{content},
+		   	   WRITER  =   #{writer},
+		   	   REGDATE  =   NOW()
+		 WHERE ENO = #{eno} 
+	</update>
+	
+	<delete id="delete" parameterType="int">
+		DELETE 
+		  FROM MP_EXCEPTION
+		 WHERE ENO = #{eno}
+	</delete> 
+</mapper>
